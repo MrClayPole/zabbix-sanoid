@@ -1,0 +1,99 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 15e7d29572e64ece81f2a656f7cca9d3
+      name: Templates/Sanoid
+  templates:
+    - uuid: ff3248345a2c4aa4bfa5e51a5b6ef6f5
+      template: 'Sanoid by Zabbix agent'
+      name: 'Sanoid by Zabbix agent'
+      description: |
+        Monitors ZFS snapshot freshness, pool capacity and pool health via sanoid --monitor-* commands.
+        Each item stores sanoid's full Nagios-style text output; triggers match the leading OK/WARN/CRIT keyword.
+        Requires the accompanying sanoid.conf UserParameter file and sudo rules on the agent host.
+      groups:
+        - name: Templates/Sanoid
+      items:
+        - uuid: aab3d192d8364a88b79a40e20537c6be
+          name: 'Sanoid: snapshot monitor output'
+          type: ZABBIX_PASSIVE
+          key: sanoid.monitor.snapshots.text
+          delay: 5m
+          history: 90d
+          trends: '0'
+          value_type: TEXT
+          description: 'Full text output of sanoid --monitor-snapshots.'
+          tags:
+            - tag: Application
+              value: 'sanoid snapshots'
+          triggers:
+            - uuid: fd6dbceaa1bb495db1a504fc8666b195
+              expression: 'find(/Sanoid by Zabbix agent/sanoid.monitor.snapshots.text,,"regexp","^WARN")=1'
+              name: 'Sanoid: snapshots WARN on {HOST.NAME}'
+              priority: WARNING
+              description: 'sanoid --monitor-snapshots reported WARN: {ITEM.VALUE}'
+              dependencies:
+                - name: 'Sanoid: snapshots CRIT on {HOST.NAME}'
+                  expression: 'find(/Sanoid by Zabbix agent/sanoid.monitor.snapshots.text,,"regexp","^CRIT")=1'
+            - uuid: 07a6689a35504d78b4fb0f0c1f57e907
+              expression: 'find(/Sanoid by Zabbix agent/sanoid.monitor.snapshots.text,,"regexp","^CRIT")=1'
+              name: 'Sanoid: snapshots CRIT on {HOST.NAME}'
+              priority: HIGH
+              description: 'sanoid --monitor-snapshots reported CRIT: {ITEM.VALUE}'
+            - uuid: daeabf7c73aa4155916f4ccbb22fea6d
+              expression: 'nodata(/Sanoid by Zabbix agent/sanoid.monitor.snapshots.text,15m)=1 or find(/Sanoid by Zabbix agent/sanoid.monitor.snapshots.text,,"regexp","^UNKNOWN")=1'
+              name: 'Sanoid: snapshot monitor UNKNOWN/no data on {HOST.NAME}'
+              priority: AVERAGE
+              description: 'sanoid returned UNKNOWN or the agent is not returning data (check sudo / path).'
+        - uuid: 378f658dec6949cdbf597f467c72b208
+          name: 'Sanoid: capacity monitor output'
+          type: ZABBIX_PASSIVE
+          key: sanoid.monitor.capacity.text
+          delay: 15m
+          history: 90d
+          trends: '0'
+          value_type: TEXT
+          description: 'Full text output of sanoid --monitor-capacity.'
+          tags:
+            - tag: Application
+              value: 'sanoid capacity'
+          triggers:
+            - uuid: 07acb94e812e49a99fd174de48606344
+              expression: 'find(/Sanoid by Zabbix agent/sanoid.monitor.capacity.text,,"regexp","^WARN")=1'
+              name: 'Sanoid: capacity WARN on {HOST.NAME}'
+              priority: WARNING
+              description: '{ITEM.VALUE}'
+              dependencies:
+                - name: 'Sanoid: capacity CRIT on {HOST.NAME}'
+                  expression: 'find(/Sanoid by Zabbix agent/sanoid.monitor.capacity.text,,"regexp","^CRIT")=1'
+            - uuid: 95a24b2decc743df9339a18fa7831f6c
+              expression: 'find(/Sanoid by Zabbix agent/sanoid.monitor.capacity.text,,"regexp","^CRIT")=1'
+              name: 'Sanoid: capacity CRIT on {HOST.NAME}'
+              priority: HIGH
+              description: '{ITEM.VALUE}'
+        - uuid: 5f7a780ee36f47698caa9b35ddad75d2
+          name: 'Sanoid: health monitor output'
+          type: ZABBIX_PASSIVE
+          key: sanoid.monitor.health.text
+          delay: 5m
+          history: 90d
+          trends: '0'
+          value_type: TEXT
+          description: 'Full text output of sanoid --monitor-health (zpool health).'
+          tags:
+            - tag: Application
+              value: 'sanoid health'
+          triggers:
+            - uuid: be1cd5a75403499bb19d07d0fcff7a90
+              expression: 'find(/Sanoid by Zabbix agent/sanoid.monitor.health.text,,"regexp","^WARN")=1'
+              name: 'Sanoid: pool health WARN on {HOST.NAME}'
+              priority: WARNING
+              description: '{ITEM.VALUE}'
+              dependencies:
+                - name: 'Sanoid: pool health CRIT on {HOST.NAME}'
+                  expression: 'find(/Sanoid by Zabbix agent/sanoid.monitor.health.text,,"regexp","^CRIT")=1'
+            - uuid: 28972b62c57e4c48a232fe62498fd755
+              expression: 'find(/Sanoid by Zabbix agent/sanoid.monitor.health.text,,"regexp","^CRIT")=1'
+              name: 'Sanoid: pool health CRIT on {HOST.NAME}'
+              priority: DISASTER
+              description: '{ITEM.VALUE}'
