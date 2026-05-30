@@ -1,0 +1,1 @@
+zabbix ALL=(root) NOPASSWD: /usr/sbin/sanoid --monitor-snapshots, /usr/sbin/sanoid --monitor-capacity, /usr/sbin/sanoid --monitor-health
